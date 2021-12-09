@@ -4,9 +4,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityStandardAssets.Characters.ThirdPerson;
 
 public class PlayerBfs : MonoBehaviour
 {
+    private ThirdPersonCharacter character;
     int row = 7;
     int col = 8;
     int[] start = new int[] {1,1};
@@ -18,64 +20,81 @@ public class PlayerBfs : MonoBehaviour
                                 {0,1,1,0,0,1,1,0},
                                 {0,0,1,1,1,1,1,0},
                                 {0,0,0,0,0,0,0,0}};
+    float currentTime = 0f;
+    float spanTime = 1.0f;
+    Stack<int[]> stack = new Stack<int[]>();
+    Dictionary<string, bool> visited = new Dictionary<string, bool>();
 
-    // Start is called before the first frame update
     void Start()
     {
-        Bfs();
+        character = GetComponent<ThirdPersonCharacter>();
+
+        stack.Push(start);
+        visited.Add(string.Join("-",start), true);
     }
 
-    // Update is called once per frame
     void Update()
     {
-        
+        currentTime += Time.deltaTime;
+        if (currentTime >= spanTime)
+        {
+            currentTime = 0;
+            MovePlayer();
+	    }
     }
 
-    void Bfs()
-    {
-        var stack = new Stack<int[]>();
-        stack.Push(this.start);
-        var visited = new Dictionary<string, bool>();
-        visited.Add(string.Concat(this.start),true);
-        var d = new int[,] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
-
-        while (stack.Count > 0)
+    void MovePlayer()
+    { 
+        if (stack.Count > 0)
         {
             int[] current = stack.Pop();
+            transform.position =
+             Vector3.MoveTowards(transform.position, new Vector3(current[0] + 0.5f, 0, current[1] + 0.5f), Time.deltaTime);
+            //character.Move(new Vector3(current[0] + 0.5f, 0, current[1] + 0.5f),false,false);
+            //transform.Translate(, Space.World);
+            Bfs(current);
+        }
+        else
+        {
+            Debug.Log("game over");
+	    }
+    }
 
-            if (current.SequenceEqual(this.goal))
-	        {
-                Debug.Log(current);
-                Debug.Log("goal");
-                transform.position = new Vector3(current[0] + 0.5f, 0, current[1] + 0.5f);
-                break;
-	        }
+    void Bfs(int[] current)
+    {
+        var d = new int[,] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
 
-
+        if (current.SequenceEqual(this.goal))
+	    {
+            Debug.Log("goal");
+	    }
+        else 
+	    {
             for (int i = 0; i < d.GetLength(0); i++)
             {
                 int x = current[0] + d[i, 0];
                 int z = current[1] + d[i, 1];
-                int[] next = { x,z };
-                if (visited.ContainsKey(string.Concat(next)))
+                int[] next = { x, z };
+                if (visited.ContainsKey(string.Join("-",next)))
                 {
                     continue;
-		        }
+                }
 
-                if (IsOutside(x,z))
+                if (IsOutside(x, z))
                 {
                     continue;
-		        }
+                }
 
-                if (IsConflict(x,z))
+                if (IsConflict(x, z))
                 {
                     continue;
-		        }
+                }
 
                 stack.Push(next);
-                visited.Add(string.Concat(next), true);
+                visited.Add(string.Join("-", next), true);
             }
         }
+        
     }
 
     bool IsOutside(int x, int z)
