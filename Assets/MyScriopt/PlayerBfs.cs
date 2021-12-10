@@ -5,71 +5,66 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityStandardAssets.Characters.ThirdPerson;
+using MyScript;
 
-public class PlayerBfs : MonoBehaviour
-{
-    private ThirdPersonCharacter character;
-    int row = 7;
-    int col = 8;
-    int[] start = new int[] {1,1};
-    int[] goal = new int[] {3,4};
-    int[,] dist = new int[7, 8] { {0,0,0,0,0,0,0,0},
-                                {0,1,1,1,1,1,1,0},
-                                {0,1,0,0,0,0,0,0},
-                                {0,1,1,0,1,1,1,0},
-                                {0,1,1,0,0,1,1,0},
-                                {0,0,1,1,1,1,1,0},
-                                {0,0,0,0,0,0,0,0}};
-    float currentTime = 0f;
-    float spanTime = 1.0f;
-    Stack<int[]> stack = new Stack<int[]>();
-    Dictionary<string, bool> visited = new Dictionary<string, bool>();
-
-    void Start()
+namespace MyScript 
+{ 
+    public class PlayerBfs : MonoBehaviour
     {
-        character = GetComponent<ThirdPersonCharacter>();
+        private CharacterMove character;
+        int row = 7;
+        int col = 8;
+        int[] start = new int[] {1,1};
+        int[] goal = new int[] {3,4};
+        int[,] dist = new int[7, 8] { {0,0,0,0,0,0,0,0},
+                                    {0,1,1,1,1,1,1,0},
+                                    {0,1,0,0,0,0,0,0},
+                                    {0,1,1,0,1,1,1,0},
+                                    {0,1,1,0,0,1,1,0},
+                                    {0,0,1,1,1,1,1,0},
+                                    {0,0,0,0,0,0,0,0}};
+        bool is_arrived = true;
+        Vector3 next_pos;
+        Stack<int[]> stack = new Stack<int[]>();
+        Dictionary<string, bool> visited = new Dictionary<string, bool>();
 
-        stack.Push(start);
-        visited.Add(string.Join("-",start), true);
-    }
-
-    void Update()
-    {
-        currentTime += Time.deltaTime;
-        if (currentTime >= spanTime)
+        void Start()
         {
-            currentTime = 0;
-            MovePlayer();
-	    }
-    }
+            character = GetComponent<CharacterMove>();
 
-    void MovePlayer()
-    { 
-        if (stack.Count > 0)
-        {
-            int[] current = stack.Pop();
-            transform.position =
-             Vector3.MoveTowards(transform.position, new Vector3(current[0] + 0.5f, 0, current[1] + 0.5f), Time.deltaTime);
-            //character.Move(new Vector3(current[0] + 0.5f, 0, current[1] + 0.5f),false,false);
-            //transform.Translate(, Space.World);
-            Bfs(current);
+            stack.Push(start);
+            visited.Add(string.Join("-",start), true);
+            transform.position = new Vector3(start[0] + .5f,.5f,start[1] + .5f);
         }
-        else
+
+        void Update()
         {
-            Debug.Log("game over");
-	    }
-    }
+            MovePlayer();
+        }
 
-    void Bfs(int[] current)
-    {
-        var d = new int[,] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
+        void MovePlayer()
+        { 
+            if (is_arrived)
+            {
+                if (stack.Count > 0)
+                {
+                    is_arrived = false;
+                    int[] current = stack.Pop();
+                    next_pos = new Vector3(current[0]+ 0.5f, transform.position.y, current[1]+0.5f);
+                    PushStack(current);
+                }
+            }
+            character.MoveCoordinate(next_pos);
+            //transform.position = Vector3.MoveTowards(transform.position, next_pos, Time.deltaTime);
+            if (transform.position == next_pos)
+            {
+                is_arrived = true;
+	        }
+        }
 
-        if (current.SequenceEqual(this.goal))
-	    {
-            Debug.Log("goal");
-	    }
-        else 
-	    {
+        void PushStack(int[] current)
+        {
+            var d = new int[,] { { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 } };
             for (int i = 0; i < d.GetLength(0); i++)
             {
                 int x = current[0] + d[i, 0];
@@ -94,16 +89,16 @@ public class PlayerBfs : MonoBehaviour
                 visited.Add(string.Join("-", next), true);
             }
         }
-        
-    }
 
-    bool IsOutside(int x, int z)
-    {
-        return ((0 > x || this.row < x) || (0 > z || this.col < z));
-    }
+        bool IsOutside(int x, int z)
+        {
+            return ((0 > x || this.row < x) || (0 > z || this.col < z));
+        }
 
-    bool IsConflict(int x,int z)
-    {
-        return !Convert.ToBoolean(this.dist[x, z]);
+        bool IsConflict(int x,int z)
+        {
+            return !Convert.ToBoolean(this.dist[x, z]);
+        }
+
     }
 }
