@@ -12,6 +12,7 @@ namespace MyScript
     public class PlayerBfs : MonoBehaviour
     {
         private CharacterMove character;
+        int stop_counter = 0;
         int row = 7;
         int col = 8;
         int[] start = new int[] {1,1};
@@ -34,7 +35,7 @@ namespace MyScript
 
             stack.Push(start);
             visited.Add(string.Join("-",start), true);
-            transform.position = new Vector3(start[0] + .5f,.5f,start[1] + .5f);
+            transform.position = new Vector3(start[0] + .5f,0,start[1] + .5f);
         }
 
         void Update()
@@ -43,7 +44,12 @@ namespace MyScript
         }
 
         void MovePlayer()
-        { 
+        {
+            stop_counter++;
+            if (stop_counter < 1000)
+            {
+                return;
+	        }
             if (is_arrived)
             {
                 if (stack.Count > 0)
